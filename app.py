@@ -6,8 +6,13 @@ import dash_core_components as dcc
 import dash_html_components as html
 import time
 import pdb
+from Recommender import Recommender
+
+
 
 def prep_data(username):
+
+    global id_2_title, title_2_id, username_2_id, id_2_username
 
     print("Loading data...")
     start = time.time()
@@ -53,19 +58,34 @@ def prep_data(username):
     jikan = Jikan()
     user_profile = jikan.user(username=username, request='animelist')
     # Parse data such that it is in the form: (user_id, anime_id, rating)
-    user_data = [(len(username_2_id) + 1, title_2_id[anime['title']], anime['score']) 
+    user_id = len(username_2_id) + 1
+    user_data = [(user_id, title_2_id[anime['title']], anime['score']) 
         for anime in user_profile['anime'] if anime['title'] in title_2_id]
 
     # Append the new data gotten from API to our original dataset
     tmp = pd.DataFrame(user_data, columns=['userID','itemID','rating'])
-    print("old df shape: {}".format(df.shape))
     df = df.append(tmp,ignore_index = True)
+
+    # Get list of animes that need to be rated
+    anime_watched = df[df.userID == user_id].itemID.values
+    testset = [item_id for item_id in df.itemID.unique() if item_id not in anime_watched]
 
     end = time.time()
     print("Time Elapsed: {}".format(end - start))
-
-    print('new df shape: {}'.format(df.shape))
-    return df
+    return df, user_id, testset
 
 if __name__ == '__main__':
-    prep_data('FreeMakintosh')
+    id_2_title = None
+    title_2_id = None
+    username_2_id = None
+    id_2_username = None
+
+    df, user_id, testset = prep_data('FreeMakintosh')
+    recommender = Recommender(df, user_id, testset)
+    recommender.surprise_fit()
+    predictions = recommender.surprise_predict()
+    predictions = sorted(predictions, key=lambda x: x.est, reverse=True)
+    
+    #Print out the top 10 recommendations
+    for prediction in predictions[:10]:
+        print(id_2_title[prediction.iid])
