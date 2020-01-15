@@ -25,15 +25,15 @@ class Recommender():
 		start = time.time()
 		self.algo.fit(trainset)
 		end = time.time()
-		print("Train time: {}".format(end - start))
+		# print("Train time: {}".format(end - start))
 
 	def surprise_predict(self):
-		print("Predicting...")
+		# print("Predicting...")
 		start = time.time()
 		predictions = []
 		for item_id in self.testset:
 			prediction = self.algo.predict(self.user_id, item_id)
 			predictions.append(prediction)
 		end = time.time()
-		print("Prediction Time: {}".format(end-start))
+		# print("Prediction Time: {}".format(end-start))
 		return predictions

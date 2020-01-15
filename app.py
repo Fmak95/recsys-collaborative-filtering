@@ -5,8 +5,9 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import time
-import pdb
+# import pdb
 from Recommender import Recommender
+import argparse
 
 
 
@@ -14,7 +15,7 @@ def prep_data(username):
 
     global id_2_title, title_2_id, username_2_id, id_2_username
 
-    print("Loading data...")
+    # print("Loading data...")
     start = time.time()
     # Read in anime database: contains all animes along with its associated integer id
     anime_id_map = pd.read_csv('./data/anime_id_title.csv')
@@ -71,7 +72,7 @@ def prep_data(username):
     testset = [item_id for item_id in df.itemID.unique() if item_id not in anime_watched]
 
     end = time.time()
-    print("Time Elapsed: {}".format(end - start))
+    # print("Time Elapsed: {}".format(end - start))
     return df, user_id, testset
 
 if __name__ == '__main__':
@@ -80,12 +81,19 @@ if __name__ == '__main__':
     username_2_id = None
     id_2_username = None
 
-    df, user_id, testset = prep_data('FreeMakintosh')
+    # Command Line Arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-u', '--user', required = True, help='Your MAL account username')
+    username = vars(parser.parse_args())['user']
+    # print(username)
+
+    df, user_id, testset = prep_data(username)
     recommender = Recommender(df, user_id, testset)
     recommender.surprise_fit()
     predictions = recommender.surprise_predict()
     predictions = sorted(predictions, key=lambda x: x.est, reverse=True)
     
     #Print out the top 10 recommendations
+    print("Top 10 recommendations for you are:")
     for prediction in predictions[:10]:
         print(id_2_title[prediction.iid])
